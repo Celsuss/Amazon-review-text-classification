@@ -1,0 +1,19 @@
+
+- name: Build docker images
+  hosts: localhost
+  tasks:
+    - name: Build frontend image
+      become: true
+      community.docker.docker_image:
+        build:
+          path: ../frontend
+        name: review-text-frontend
+        source: build
+        state: present
+    - name: Build backend image
+      become: true
+      community.docker.docker_image:
+        build:
+          path: ../backend
+        name: review-text-backend
+        source: build
