@@ -5,13 +5,13 @@ resource "kubernetes_namespace" "review-text-classification-namespace" {
   }
 }
 
-resource "kubernetes_deployment" "review-text-classification-deployment" {
+resource "kubernetes_deployment" "review-text-classification-frontend-deployment" {
   metadata {
-    name = "review-text-classification-deployment"
+    name = "review-text-classification-frontend-deployment"
     labels = {
-      test = "reviewTextApp"
+      app = "reviewTextFrontend"
     }
-    namespace = "review-text-classification-ns"
+    namespace = kubernetes_namespace.review-text-classification-namespace.metadata.0.name
   }
 
   spec {
@@ -19,23 +19,46 @@ resource "kubernetes_deployment" "review-text-classification-deployment" {
 
     selector {
       match_labels = {
-        test = "reviewTextApp"
+        app = "reviewTextFrontend"
       }
     }
 
     template {
       metadata {
         labels = {
-          test = "reviewTextApp"
+          app = "reviewTextFrontend"
         }
       }
 
       spec {
         container {
-          image = "nginx:1.21.6"
-          name  = "example"
+          image             = "review-text-frontend"
+          name              = "review-text-frontend"
+          image_pull_policy = "Never"
+          port {
+            container_port = 80
+          }
         }
       }
     }
+  }
+}
+
+resource "kubernetes_service" "review-text-classification-frontend-service" {
+  metadata {
+    name      = "review-text-classification-frontend-service"
+    namespace = kubernetes_namespace.review-text-classification-namespace.metadata.0.name
+  }
+  spec {
+    selector = {
+      app = kubernetes_deployment.review-text-classification-frontend-deployment.metadata[0].labels.app
+    }
+    port {
+      node_port   = 30201
+      port        = 80
+      target_port = 80
+    }
+
+    type = "NodePort"
   }
 }

@@ -1,19 +1,36 @@
 
 - name: Build docker images
   hosts: localhost
+  pre_tasks:
+    - name: check the status of minikube.
+      command: minikube status
+      register: minikube_status
+      changed_when: false
+      ignore_errors: true
+
+    - name: start minikube if it's not running.
+      command: minikube start --vm = true
+      when: "not minikube_status.stdout or 'Running' not in minikube_status.stdout"
   tasks:
-    - name: Build frontend image
-      become: true
-      community.docker.docker_image:
-        build:
-          path: ../frontend
-        name: review-text-frontend
-        source: build
-        state: present
-    - name: Build backend image
-      become: true
-      community.docker.docker_image:
-        build:
-          path: ../backend
-        name: review-text-backend
-        source: build
+    - name: Build frontend image on minikube
+      shell: |
+        eval $(minikube docker-env)
+        docker build -t review-text-frontend:latest ../frontend
+
+    # - name: Build frontend image
+    #   become: true
+    #   community.docker.docker_image:
+    #     build:
+    #       path: ../frontend
+    #     name: review-text-frontend
+    #     source: build
+    #     state: present
+    #     force_source: true
+    # - name: Build backend image
+    #   become: true
+    #   community.docker.docker_image:
+    #     build:
+    #       path: ../backend
+    #     name: review-text-backend
+    #     source: build
+    #     force_source: true
