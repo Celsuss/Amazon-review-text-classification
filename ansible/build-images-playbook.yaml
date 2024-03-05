@@ -16,6 +16,10 @@
       shell: |
         eval $(minikube docker-env)
         docker build -t review-text-frontend:latest ../frontend
+    - name: Build api image on minikube
+      shell: |
+        eval $(minikube docker-env)
+        docker build -t review-text-api:latest ../backend
 
     # - name: Build frontend image
     #   become: true
