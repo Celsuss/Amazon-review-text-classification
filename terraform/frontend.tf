@@ -1,10 +1,10 @@
 
 # Deployment
-resource "kubernetes_deployment" "review-text-classification-frontend-deployment" {
+resource "kubernetes_deployment" "frontend-deployment" {
   metadata {
-    name = "review-text-classification-frontend-deployment"
+    name = "frontend-deployment"
     labels = {
-      app = "reviewTextFrontend"
+      app = "Frontend"
     }
     namespace = kubernetes_namespace.review-text-classification-namespace.metadata.0.name
   }
@@ -14,14 +14,14 @@ resource "kubernetes_deployment" "review-text-classification-frontend-deployment
 
     selector {
       match_labels = {
-        app = "reviewTextFrontend"
+        app = "Frontend"
       }
     }
 
     template {
       metadata {
         labels = {
-          app = "reviewTextFrontend"
+          app = "Frontend"
         }
       }
 
@@ -40,14 +40,14 @@ resource "kubernetes_deployment" "review-text-classification-frontend-deployment
 }
 
 # Service
-resource "kubernetes_service" "review-text-classification-frontend-service" {
+resource "kubernetes_service" "frontend-service" {
   metadata {
-    name      = "review-text-classification-frontend-service"
+    name      = "frontend-service"
     namespace = kubernetes_namespace.review-text-classification-namespace.metadata.0.name
   }
   spec {
     selector = {
-      app = kubernetes_deployment.review-text-classification-frontend-deployment.metadata[0].labels.app
+      app = kubernetes_deployment.frontend-deployment.metadata[0].labels.app
     }
     port {
       node_port   = 30201
