@@ -8,10 +8,6 @@ terraform {
       source  = "hashicorp/helm"
       version = "2.12.1"
     }
-    # https://github.com/PrefectHQ/terraform-provider-prefect/blob/main/docs/guides/getting-started.md
-    # prefect = {
-    #   source = "prefecthq/prefect"
-    # }
   }
 }
 
@@ -26,10 +22,3 @@ provider "helm" {
     config_context = "minikube"
   }
 }
-
-# provider "prefect" {
-#   # api_key      = var.prefect_api_key
-#   # account_id   = var.prefect_account_id
-#   # workspace_id = var.prefect_workspace_id
-#   endpoint = "http://localhost:4200"
-# }

@@ -4,3 +4,7 @@ resource "kubernetes_namespace" "review-text-classification-namespace" {
     name = "review-text-classification-ns"
   }
 }
+
+# module "airflow" {
+#   source = "./airflow"
+# }
