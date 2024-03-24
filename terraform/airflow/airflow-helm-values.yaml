@@ -18,8 +18,12 @@ env:
     value: "value_2"
 
 dags:
-  gitsync:
-    enables: true
+  persistence:
+    enabled: true
+  gitSync:
+    enabled: true
     repo: https://github.com/Celsuss/Amazon-review-text-classification.git
-    branch: master
+    branch: main
     subPath: airflow/
+    depth: 1
+    period: 10s
