@@ -16,3 +16,10 @@ env:
     value: "value_1"
   - name: "AIRFLOW_VAR_ANOTHER_KEY"
     value: "value_2"
+
+dags:
+  gitsync:
+    enables: true
+    repo: https://github.com/Celsuss/Amazon-review-text-classification.git
+    branch: master
+    subPath: airflow/
