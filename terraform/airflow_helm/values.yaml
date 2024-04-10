@@ -1,0 +1,434 @@
+########################################
+## CONFIG | Airflow Configs
+########################################
+airflow:
+  ## the airflow executor type to use
+  ## - allowed values: "CeleryExecutor", "KubernetesExecutor", "CeleryKubernetesExecutor"
+  ## - customize the "KubernetesExecutor" pod-template with `airflow.kubernetesPodTemplate.*`
+  # executor: CeleryExecutor
+  executor: KubernetesExecutor
+
+  ## environment variables for airflow configs
+  ## - airflow env-vars are structured: "AIRFLOW__{config_section}__{config_name}"
+  ## - airflow configuration reference:
+  ##   https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html
+  ##
+  ## ____ EXAMPLE _______________
+  ##   config:
+  ##     # dag configs
+  ##     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  ##     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+  ##
+  ##     # email configs
+  ##     AIRFLOW__EMAIL__EMAIL_BACKEND: "airflow.utils.email.send_email_smtp"
+  ##     AIRFLOW__SMTP__SMTP_HOST: "smtpmail.example.com"
+  ##     AIRFLOW__SMTP__SMTP_MAIL_FROM: "admin@example.com"
+  ##     AIRFLOW__SMTP__SMTP_PORT: "25"
+  ##     AIRFLOW__SMTP__SMTP_SSL: "False"
+  ##     AIRFLOW__SMTP__SMTP_STARTTLS: "False"
+  ##
+  ##     # domain used in airflow emails
+  ##     AIRFLOW__WEBSERVER__BASE_URL: "http://airflow.example.com"
+  ##
+  ##     # ether environment variables
+  ##     HTTP_PROXY: "http://proxy.example.com:8080"
+  ##
+  config: {}
+
+  ## a list of users to create
+  ## - templates can ONLY be used in: `password`, `email`, `firstName`, `lastName`
+  ## - templates used a bash-like syntax: ${MY_USERNAME}, $MY_USERNAME
+  ## - templates are defined in `usersTemplates`
+  ## - `role` can be a single role or a list of roles
+  ##
+  users:
+    - username: admin
+      password: admin
+      role: Admin
+      email: admin@example.com
+      firstName: admin
+      lastName: admin
+
+  ## a list airflow connections to create
+  ## - templates can ONLY be used in: `host`, `login`, `password`, `schema`, `extra`
+  ## - templates used a bash-like syntax: ${AWS_ACCESS_KEY} or $AWS_ACCESS_KEY
+  ## - templates are defined in `connectionsTemplates`
+  ##
+  ## ____ EXAMPLE _______________
+  ##   connections:
+  ##     - id: my_aws
+  ##       type: aws
+  ##       description: my AWS connection
+  ##       extra: |-
+  ##         { "aws_access_key_id": "${AWS_KEY_ID}",
+  ##           "aws_secret_access_key": "${AWS_ACCESS_KEY}",
+  ##           "region_name":"eu-central-1" }
+
+  ##
+  connections: []
+
+  ## a list airflow variables to create
+  ## - templates can ONLY be used in: `value`
+  ## - templates used a bash-like syntax: ${MY_VALUE} or $MY_VALUE
+  ## - templates are defined in `connectionsTemplates`
+  ##
+  ## ____ EXAMPLE _______________
+  ##   variables:
+  ##     - key: "var_1"
+  ##       value: "my_value_1"
+  ##     - key: "var_2"
+  ##       value: "my_value_2"
+  ##
+  variables: []
+
+  ## kubernetes cluster domain name
+  ## - configured in the kubelet with `--cluster-domain` flag (deprecated):
+  ##   https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+  ## - or configured in the kubelet with configuration file `clusterDomain` option:
+  ##   https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/
+  ##
+  clusterDomain: "cluster.local"
+
+
+  ########################################
+  ## COMPONENT | Sync Deployments
+  ########################################
+  ## - used by the Deployments/Jobs used by `airflow.{connections,pools,users,variables}`
+  ##
+  sync:
+    ## resource requests/limits for the sync Pods
+    ## - spec for ResourceRequirements:
+    ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#resourcerequirements-v1-core
+    ##
+    resources: {}
+
+    ## the nodeSelector configs for the sync Pods
+    ## - docs for nodeSelector:
+    ##   https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    ##
+    nodeSelector: {}
+
+    ## the affinity configs for the sync Pods
+    ## - spec for Affinity:
+    ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#affinity-v1-core
+    ##
+    affinity: {}
+
+    ## the toleration configs for the sync Pods
+    ## - spec for Toleration:
+    ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#toleration-v1-core
+    ##
+    tolerations: []
+
+    ## the security context for the sync Pods
+    ## - spec for PodSecurityContext:
+    ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podsecuritycontext-v1-core
+    ##
+    securityContext: {}
+
+    ## Labels for the sync Deployments/Jobs
+    ##
+    labels: {}
+
+    ## Pod labels for the sync Deployments/Jobs
+    ##
+    podLabels: {}
+
+    ## annotations for the sync Deployments/Jobs
+    ##
+    annotations: {}
+
+    ## Pod annotations for the sync Deployments/Jobs
+    ##
+    podAnnotations: {}
+
+    ## if we add the annotation: "cluster-autoscaler.kubernetes.io/safe-to-evict" = "true"
+    ##
+    safeToEvict: true
+
+###################################
+## COMPONENT | Airflow Webserver
+###################################
+web:
+  ########################################
+  ## FILE | webserver_config.py
+  ########################################
+  ##
+  webserverConfig:
+  ## configs for the Service of the web Pods
+  ##
+  service:
+    annotations: {}
+    sessionAffinity: "None"
+    sessionAffinityConfig: {}
+    # type: ClusterIP
+    type: NodePort
+    externalPort: 8080
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    nodePort:
+      http: "30007"
+
+  ## configs for the git-sync sidecar (https://github.com/kubernetes/git-sync)
+  ##
+  gitSync:
+    ## if the git-sync sidecar container is enabled
+    ##
+    enabled: false
+
+    ## the git-sync container image
+    ##
+    image:
+      repository: registry.k8s.io/git-sync/git-sync
+      tag: v3.6.5
+      pullPolicy: IfNotPresent
+      uid: 65533
+      gid: 65533
+
+
+    ## resource requests/limits for the git-sync container
+    ## - spec for ResourceRequirements:
+    ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#resourcerequirements-v1-core
+    ##
+    resources: {}
+
+    ## the url of the git repo
+    ##
+    ## ____ EXAMPLE _______________
+    ##   # https git repo
+    ##   repo: "https://github.com/USERNAME/REPOSITORY.git"
+    ##
+    ## ____ EXAMPLE _______________
+    ##   # ssh git repo
+    ##   repo: "git@github.com:USERNAME/REPOSITORY.git"
+    ##
+    repo: ""
+
+    ## the sub-path within your repo where dags are located
+    ## - only dags under this path within your repo will be seen by airflow,
+    ##   (note, the full repo will still be cloned)
+    ##
+    repoSubPath: ""
+
+    ## the git branch to check out
+    ##
+    branch: master
+
+    ## the git revision (tag or hash) to check out
+    ##
+    revision: HEAD
+
+    ## shallow clone with a history truncated to the specified number of commits
+    ##
+    depth: 1
+
+    ## the number of seconds between syncs
+    ##
+    syncWait: 60
+
+    ## the max number of seconds allowed for a complete sync
+    ##
+    syncTimeout: 120
+
+    ## the git submodule behavior
+    ## - allowed values: "recursive", "shallow", "off"
+    ##
+    submodules: recursive
+
+    ## the name of a pre-created Secret with git http credentials
+    ##
+    httpSecret: ""
+
+    ## the key in `dags.gitSync.httpSecret` with your git username
+    ##
+    httpSecretUsernameKey: username
+
+    ## the key in `dags.gitSync.httpSecret` with your git password/token
+    ##
+    httpSecretPasswordKey: password
+
+    ## the name of a pre-created Secret with git ssh credentials
+    ##
+    sshSecret: ""
+
+    ## the key in `dags.gitSync.sshSecret` with your ssh-key file
+    ##
+    sshSecretKey: id_rsa
+
+    ## the string value of a "known_hosts" file (for SSH only)
+    ## - [WARNING] known_hosts verification will be disabled if left empty, making you more
+    ##   vulnerable to repo spoofing attacks
+    ##
+    ## ____ EXAMPLE _______________
+    ##   sshKnownHosts: |-
+    ##     <HOST_NAME> ssh-rsa <HOST_KEY>
+    ##
+    sshKnownHosts: ""
+
+    ## the number of consecutive failures allowed before aborting
+    ##  - the first sync must succeed
+    ##  - a value of -1 will retry forever after the initial sync
+    ##
+    maxFailures: 0
+
+###################################
+## CONFIG | Kubernetes Ingress
+###################################
+# ingress:
+#   ## if we should deploy Ingress resources
+#   ##
+#   enabled: false
+
+#   ## the `apiVersion` to use for Ingress resources
+#   ## - for Kubernetes 1.19 and later: "networking.k8s.io/v1"
+#   ## - for Kubernetes 1.18 and before: "networking.k8s.io/v1beta1"
+#   ##
+#   apiVersion: networking.k8s.io/v1
+
+#   ## configs for the Ingress of the web Service
+#   ##
+#   web:
+#     ## annotations for the web Ingress
+#     ##
+#     annotations: {}
+
+#     ## additional labels for the web Ingress
+#     ##
+#     labels: {}
+
+#     ## the path for the web Ingress
+#     ## - [WARNING] do NOT include the trailing slash (for root, set an empty string)
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   # webserver URL: http://example.com/airflow
+#     ##   path: "/airflow"
+#     ##
+#     path: ""
+
+#     ## the hostname for the web Ingress
+#     ##
+#     host: ""
+
+#     ## the Ingress Class for the web Ingress
+#     ## - [WARNING] requires Kubernetes 1.18 or later, use "kubernetes.io/ingress.class" annotation for older versions
+#     ##
+#     ingressClassName: ""
+
+#     ## configs for web Ingress TLS
+#     ##
+#     tls:
+#       ## enable TLS termination for the web Ingress
+#       ##
+#       enabled: false
+
+#       ## the name of a pre-created Secret containing a TLS private key and certificate
+#       ##
+#       secretName: ""
+
+#     ## http paths to add to the web Ingress before the default path
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   precedingPaths:
+#     ##     - path: "/*"
+#     ##       serviceName: "my-service"
+#     ##       servicePort: "port-name"
+#     ##
+#     precedingPaths: []
+
+#     ## http paths to add to the web Ingress after the default path
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   succeedingPaths:
+#     ##     - path: "/extra-service"
+#     ##       serviceName: "my-service"
+#     ##       servicePort: "port-name"
+#     ##
+#     succeedingPaths: []
+
+#   ## configs for the Ingress of the flower Service
+#   ##
+#   flower:
+#     ## annotations for the flower Ingress
+#     ##
+#     annotations: {}
+
+#     ## additional labels for the flower Ingress
+#     ##
+#     labels: {}
+
+#     ## the path for the flower Ingress
+#     ## - [WARNING] do NOT include the trailing slash (for root, set an empty string)
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   # flower URL: http://example.com/airflow/flower
+#     ##   path: "/airflow/flower"
+#     ##
+#     path: ""
+
+#     ## the hostname for the flower Ingress
+#     ##
+#     host: ""
+
+#     ## the Ingress Class for the flower Ingress
+#     ## - [WARNING] requires Kubernetes 1.18 or later, use "kubernetes.io/ingress.class" annotation for older versions
+#     ##
+#     ingressClassName: ""
+
+#     ## configs for flower Ingress TLS
+#     ##
+#     tls:
+#       ## enable TLS termination for the flower Ingress
+#       ##
+#       enabled: false
+
+#       ## the name of a pre-created Secret containing a TLS private key and certificate
+#       ##
+#       secretName: ""
+
+#     ## http paths to add to the flower Ingress before the default path
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   precedingPaths:
+#     ##     - path: "/*"
+#     ##       serviceName: "my-service"
+#     ##       servicePort: "port-name"
+#     ##
+#     precedingPaths: []
+
+#     ## http paths to add to the flower Ingress after the default path
+#     ##
+#     ## ____ EXAMPLE _______________
+#     ##   succeedingPaths:
+#     ##     - path: "/extra-service"
+#     ##       serviceName: "my-service"
+#     ##       servicePort: "port-name"
+#     ##
+#     succeedingPaths: []
+
+# ###################################
+# ## CONFIG | Kubernetes ServiceAccount
+# ###################################
+# serviceAccount:
+#   ## if a Kubernetes ServiceAccount is created
+#   ## - if `false`, you must create the service account outside this chart with name: `serviceAccount.name`
+#   ##
+#   create: true
+
+#   ## the name of the ServiceAccount
+#   ## - by default the name is generated using the `airflow.serviceAccountName` template in `_helpers/common.tpl`
+#   ##
+#   name: ""
+
+#   ## annotations for the ServiceAccount
+#   ##
+#   ## ____ EXAMPLE _______________
+#   ##   # EKS - IAM Roles for Service Accounts
+#   ##   annotations:
+#   ##     eks.amazonaws.com/role-arn: "arn:aws:iam::XXXXXXXXXX:role/<<MY-ROLE-NAME>>"
+#   ##
+#   ## ____ EXAMPLE _______________
+#   ##   # GKE - WorkloadIdentity
+#   ##   annotations:
+#   ##     iam.gke.io/gcp-service-account: "<<GCP_SERVICE>>@<<GCP_PROJECT>>.iam.gserviceaccount.com"
+#   ##
+#   annotations: {}

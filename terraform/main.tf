@@ -5,6 +5,10 @@ resource "kubernetes_namespace" "review-text-classification-namespace" {
   }
 }
 
-# module "airflow" {
-#   source = "./airflow"
-# }
+module "mlflow" {
+  source = "./mlflow"
+}
+
+module "airflow" {
+  source = "./airflow_helm"
+}

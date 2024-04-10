@@ -14,7 +14,7 @@ resource "helm_release" "airflow" {
       # dags_repo                      = "https://github.com/Celsuss/Amazon-review-text-classification"
       # dags_repo_branch               = "main"
       # dns_name                       = "airflow.host.com"
-      # webserverSecretKeySecretName   = kubernetes_secret.airflow-webserver-secret.metadata[0].name
+      # webserverSecretKeySecretName = kubernetes_secret.airflow-webserver-secret.metadata[0].name
       # github_credentials_secret_name = kubernetes_secret.github-credentials.metadata[0].name
     })
   ]
